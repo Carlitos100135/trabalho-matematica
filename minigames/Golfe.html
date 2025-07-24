@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+     <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #f0f0f0;
+    }
+    canvas {
+      display: block;
+      background-color: #fff;
+      margin: 0 auto;
+    }
+    .controls {
+      text-align: center;
+      padding: 10px;
+      background-color: #333;
+      color: white;
+    }
+    .controls label, .controls input {
+      margin: 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <label>Ângulo: <span id="angleValue">45</span>°</label>
+    <input type="range" id="angle" min="0" max="90" value="45" />
+
+    <label>Força: <span id="forceValue">50</span></label>
+    <input type="range" id="force" min="10" max="100" value="50" />
+
+    <button onclick="shoot()">Disparar</button>
+  </div>
+
+  <canvas id="canvas" width="800" height="400"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const angleInput = document.getElementById('angle');
+    const forceInput = document.getElementById('force');
+    const angleValue = document.getElementById('angleValue');
+    const forceValue = document.getElementById('forceValue');
+
+    let trajectory = [];
+
+    angleInput.oninput = () => {
+      angleValue.textContent = angleInput.value;
+    }
+
+    forceInput.oninput = () => {
+      forceValue.textContent = forceInput.value;
+    }
+
+    function shoot() {
+      const angleDeg = parseFloat(angleInput.value);
+      const force = parseFloat(forceInput.value);
+      const angleRad = angleDeg * Math.PI / 180;
+      const g = 9.8;
+      const v = force / 2; // simples ajuste de escala para caber na tela
+
+      trajectory = [];
+
+      for (let x = 0; x <= 800; x += 5) {
+        const t = x / (v * Math.cos(angleRad));
+        const y = canvas.height - (v * t * Math.sin(angleRad) - 0.5 * g * t * t);
+        if (y > canvas.height) break;
+        trajectory.push({ x: x, y: y });
+      }
+
+      draw();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // chão
+      ctx.fillStyle = '#228B22';
+      ctx.fillRect(0, canvas.height - 10, canvas.width, 10);
+
+      // trajetória
+      ctx.strokeStyle = '#FF4500';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < trajectory.length; i++) {
+        const p = trajectory[i];
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+
+      // bola (última posição)
+      if (trajectory.length > 0) {
+        const last = trajectory[trajectory.length - 1];
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(last.x, last.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Disparo inicial automático
+    shoot();
+  </script>  
+</body>
+</html>
